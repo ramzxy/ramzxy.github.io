@@ -245,10 +245,13 @@
 <p>test 12344</p>
 ]]></content>
       <categories>
-        <category>first/blog</category>
+        <category>personals</category>
+        <category>tests</category>
       </categories>
       <tags>
-        <tag>-&quot;first&quot; -&quot;blog&quot;</tag>
+        <tag>first</tag>
+        <tag>blog</tag>
+        <tag>cybersec</tag>
       </tags>
   </entry>
   <entry>
