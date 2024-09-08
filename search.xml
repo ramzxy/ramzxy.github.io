@@ -1,257 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Another Sample Page</title>
-    <url>/2024/08/26/Another-Sample-Page/</url>
-    <content><![CDATA[<p>Text can be <strong>bold</strong>, <em>italic</em>, <del>strikethrough</del> or <code>keyword</code>.</p>
-<p><a href="another-page">Link to another page</a>.</p>
-<p>There should be whitespace between paragraphs.</p>
-<p>There should be whitespace between paragraphs. We recommend including a README, or a file with information about your project.</p>
-<h1 id="Header-1"><a href="#Header-1" class="headerlink" title="Header 1"></a><a href="#header-1"></a>Header 1</h1><p>This is a normal paragraph following a header. GitHub is a code hosting platform for version control and collaboration. It lets you and others work together on projects from anywhere.</p>
-<h2 id="Header-2"><a href="#Header-2" class="headerlink" title="Header 2"></a><a href="#header-2"></a>Header 2</h2><blockquote>
-<p>This is a blockquote following a header.</p>
-<p>When something is important enough, you do it even if the odds are not in your favor.</p>
-</blockquote>
-<h3 id="Header-3"><a href="#Header-3" class="headerlink" title="Header 3"></a><a href="#header-3"></a>Header 3</h3><div class="highlight-container" data-rel="Js"><figure class="iseeu highlight js"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Javascript code with syntax highlighting.</span></span><br><span class="line"><span class="keyword">var</span> fun = <span class="keyword">function</span> <span class="title function_">lang</span>(<span class="params">l</span>) &#123;</span><br><span class="line">  dateformat.<span class="property">i18n</span> = <span class="built_in">require</span>(<span class="string">&quot;./lang/&quot;</span> + l);</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></div>
+    <title>Coding a PE Loader in C</title>
+    <url>/2024/08/27/PE-Loader/</url>
+    <content><![CDATA[<h1 id="How-to-write-a-PE-Loader-in-C-with-win32-api"><a href="#How-to-write-a-PE-Loader-in-C-with-win32-api" class="headerlink" title="How to write a PE Loader in C with win32 api"></a>How to write a PE Loader in C with win32 api</h1><h3 id="PE-Loader-in-windows"><a href="#PE-Loader-in-windows" class="headerlink" title="PE Loader in windows"></a>PE Loader in windows</h3><p>The PE (Portable Executable) format is the executable file format used by Windows, which includes all the information needed to load and execute an application or a dynamic link library (DLL). This format consists of two main parts: <strong>headers</strong> and <strong>sections</strong>. In this article, we will examine how to implement a PE Loader in Windows and explain the provided code in detail</p>
+<h3 id="Main-Structure-of-a-PE-Loader"><a href="#Main-Structure-of-a-PE-Loader" class="headerlink" title="Main Structure of a PE Loader"></a>Main Structure of a PE Loader</h3><p>A PE Loader is a program that loads, parses, and executes a PE file (such as an EXE or DLL). The following code implements a simple PE Loader that reads a PE file, performs necessary loading steps, including reading headers, allocating memory, mapping sections, resolving imports, applying relocations, and executing the PE file.</p>
+<h2 id="PE-Loader-Code"><a href="#PE-Loader-Code" class="headerlink" title="PE Loader Code"></a>PE Loader Code</h2><div class="highlight-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> _CRT_SECURE_NO_WARNINGS</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;windows.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Function prototypes</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">LoadPEFile</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* filePath)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">ParseHeaders</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* peBuffer, IMAGE_NT_HEADERS** ntHeaders)</span>;</span><br><span class="line"><span class="type">void</span>* <span class="title function_">AllocateMemoryForImage</span><span class="params">(IMAGE_NT_HEADERS* ntHeaders)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">MapSections</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* peBuffer, IMAGE_NT_HEADERS* ntHeaders, <span class="type">void</span>* baseAddress)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">ResolveImports</span><span class="params">(IMAGE_NT_HEADERS* ntHeaders, <span class="type">void</span>* baseAddress)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">ApplyRelocations</span><span class="params">(IMAGE_NT_HEADERS* ntHeaders, <span class="type">void</span>* baseAddress, DWORD_PTR delta)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">ExecutePE</span><span class="params">(IMAGE_NT_HEADERS* ntHeaders, <span class="type">void</span>* baseAddress)</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span>* argv[])</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (argc != <span class="number">2</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Usage: %s &lt;PE file path&gt;\n&quot;</span>, argv[<span class="number">0</span>]);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    LoadPEFile(argv[<span class="number">1</span>]);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
 
-<div class="highlight-container" data-rel="Ruby"><figure class="iseeu highlight ruby"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Ruby code with syntax highlighting</span></span><br><span class="line"><span class="title class_">GitHubPages</span><span class="symbol">:</span><span class="symbol">:Dependencies</span>.gems.each <span class="keyword">do</span> |<span class="params">gem, version</span>|</span><br><span class="line">  s.add_dependency(gem, <span class="string">&quot;= <span class="subst">#&#123;version&#125;</span>&quot;</span>)</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure></div>
+<p>This code implements a PE Loader that takes a PE file path from the command line, loads the file, and executes it. The key functions of this PE Loader are explained below.</p>
+<h4 id="1-LoadPEFile-Function"><a href="#1-LoadPEFile-Function" class="headerlink" title="1. LoadPEFile Function"></a>1. <code>LoadPEFile</code> Function</h4><p>This function reads the PE file from disk and begins the loading process.</p>
+<div class="highlight-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">LoadPEFile</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* filePath)</span> &#123;</span><br><span class="line">    FILE* peFile = fopen(filePath, <span class="string">&quot;rb&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (!peFile) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Failed to open PE file: %s\n&quot;</span>, filePath);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Get the size of the file</span></span><br><span class="line">    fseek(peFile, <span class="number">0</span>, SEEK_END);</span><br><span class="line">    <span class="type">long</span> fileSize = ftell(peFile);</span><br><span class="line">    fseek(peFile, <span class="number">0</span>, SEEK_SET);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Allocate memory and read the file into the buffer</span></span><br><span class="line">    <span class="type">char</span>* peBuffer = (<span class="type">char</span>*)<span class="built_in">malloc</span>(fileSize);</span><br><span class="line">    fread(peBuffer, <span class="number">1</span>, fileSize, peFile);</span><br><span class="line">    fclose(peFile);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Parse headers and load sections</span></span><br><span class="line">    IMAGE_NT_HEADERS* ntHeaders;</span><br><span class="line">    ParseHeaders(peBuffer, &amp;ntHeaders);</span><br><span class="line">    <span class="type">void</span>* baseAddress = AllocateMemoryForImage(ntHeaders);</span><br><span class="line">    MapSections(peBuffer, ntHeaders, baseAddress);</span><br><span class="line">    ResolveImports(ntHeaders, baseAddress);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Handle relocations</span></span><br><span class="line">    DWORD_PTR delta = (DWORD_PTR)baseAddress - ntHeaders-&gt;OptionalHeader.ImageBase;</span><br><span class="line">    <span class="keyword">if</span> (delta != <span class="number">0</span>) &#123;</span><br><span class="line">        ApplyRelocations(ntHeaders, baseAddress, delta);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ExecutePE(ntHeaders, baseAddress);</span><br><span class="line">    <span class="built_in">free</span>(peBuffer);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
 
-<h4 id="Header-4"><a href="#Header-4" class="headerlink" title="Header 4"></a><a href="#header-4"></a>Header 4</h4><ul>
-<li>This is an unordered list following a header.</li>
-<li>This is an unordered list following a header.</li>
-<li>This is an unordered list following a header.</li>
-</ul>
-<h5 id="Header-5"><a href="#Header-5" class="headerlink" title="Header 5"></a><a href="#header-5"></a>Header 5</h5><ol>
-<li>This is an ordered list following a header.</li>
-<li>This is an ordered list following a header.</li>
-<li>This is an ordered list following a header.</li>
-</ol>
-<h6 id="Header-6"><a href="#Header-6" class="headerlink" title="Header 6"></a><a href="#header-6"></a>Header 6</h6><table>
-<thead>
-<tr>
-<th align="left">head1</th>
-<th align="left">head two</th>
-<th align="left">three</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">ok</td>
-<td align="left">good swedish fish</td>
-<td align="left">nice</td>
-</tr>
-<tr>
-<td align="left">out of stock</td>
-<td align="left">good and plenty</td>
-<td align="left">nice</td>
-</tr>
-<tr>
-<td align="left">ok</td>
-<td align="left">good <code>oreos</code></td>
-<td align="left">hmm</td>
-</tr>
-<tr>
-<td align="left">ok</td>
-<td align="left">good <code>zoute</code> drop</td>
-<td align="left">yumm</td>
-</tr>
-</tbody></table>
-<h3 id="There’s-a-horizontal-rule-below-this"><a href="#There’s-a-horizontal-rule-below-this" class="headerlink" title="There’s a horizontal rule below this."></a>There’s a horizontal rule below this.</h3><hr>
-<h3 id="Here-is-an-unordered-list"><a href="#Here-is-an-unordered-list" class="headerlink" title="Here is an unordered list:"></a>Here is an unordered list:</h3><ul>
-<li>Item foo</li>
-<li>Item bar</li>
-<li>Item baz</li>
-<li>Item zip</li>
-</ul>
-<h3 id="And-an-ordered-list"><a href="#And-an-ordered-list" class="headerlink" title="And an ordered list:"></a>And an ordered list:</h3><ol>
-<li>Item one</li>
-<li>Item two</li>
-<li>Item three</li>
-<li>Item four</li>
-</ol>
-<h3 id="And-a-nested-list"><a href="#And-a-nested-list" class="headerlink" title="And a nested list:"></a>And a nested list:</h3><ul>
-<li>level 1 item<ul>
-<li>level 2 item</li>
-<li>level 2 item<ul>
-<li>level 3 item</li>
-<li>level 3 item</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>level 1 item<ul>
-<li>level 2 item</li>
-<li>level 2 item</li>
-<li>level 2 item</li>
-</ul>
-</li>
-<li>level 1 item<ul>
-<li>level 2 item</li>
-<li>level 2 item</li>
-</ul>
-</li>
-<li>level 1 item</li>
-</ul>
-<h3 id="Small-image"><a href="#Small-image" class="headerlink" title="Small image"></a>Small image</h3><p><img  
-                     lazyload
-                     src="/images/loading.svg"
-                     data-src="https://assets-cdn.github.com/images/icons/emoji/octocat.png"
-                     
-                ></p>
-<h3 id="Large-image"><a href="#Large-image" class="headerlink" title="Large image"></a>Large image</h3><p><img  
-                     lazyload
-                     src="/images/loading.svg"
-                     data-src="https://guides.github.com/activities/hello-world/branching.png"
-                     
-                ></p>
-<h3 id="Definition-lists-can-be-used-with-HTML-syntax"><a href="#Definition-lists-can-be-used-with-HTML-syntax" class="headerlink" title="Definition lists can be used with HTML syntax."></a>Definition lists can be used with HTML syntax.</h3><dl>
-<dt>Name</dt>
-<dd>Godzilla</dd>
-<dt>Born</dt>
-<dd>1952</dd>
-<dt>Birthplace</dt>
-<dd>Japan</dd>
-<dt>Color</dt>
-<dd>Green</dd>
-</dl>
+<h4 id="2-ParseHeaders-Function"><a href="#2-ParseHeaders-Function" class="headerlink" title="2. ParseHeaders Function"></a>2. <code>ParseHeaders</code> Function</h4><p>This function reads the PE headers from the PE file buffer and verifies whether the PE file is valid.</p>
+<div class="highlight-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">ParseHeaders</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* peBuffer, IMAGE_NT_HEADERS** ntHeaders)</span> &#123;</span><br><span class="line">    <span class="comment">// DOS Header</span></span><br><span class="line">    IMAGE_DOS_HEADER* dosHeader = (IMAGE_DOS_HEADER*)peBuffer;</span><br><span class="line">    <span class="keyword">if</span> (dosHeader-&gt;e_magic != IMAGE_DOS_SIGNATURE) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Invalid DOS signature.\n&quot;</span>);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// NT Headers</span></span><br><span class="line">    *ntHeaders = (IMAGE_NT_HEADERS*)(peBuffer + dosHeader-&gt;e_lfanew);</span><br><span class="line">    <span class="keyword">if</span> ((*ntHeaders)-&gt;Signature != IMAGE_NT_SIGNATURE) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Invalid PE signature.\n&quot;</span>);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Valid PE file.\n&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
 
-<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="code"><pre><span class="line">Long, single-line code blocks should not wrap. They should horizontally scroll if they are too long. This line should be long enough to demonstrate this.</span><br></pre></td></tr></table></figure></div>
+<h4 id="3-AllocateMemoryForImage-Function"><a href="#3-AllocateMemoryForImage-Function" class="headerlink" title="3. AllocateMemoryForImage Function"></a>3. <code>AllocateMemoryForImage</code> Function</h4><p>This function allocates memory for the PE image. It first attempts to allocate memory at the preferred base address specified in the PE file, and if that fails, it allocates memory at any available address.</p>
+<div class="highlight-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span>* <span class="title function_">AllocateMemoryForImage</span><span class="params">(IMAGE_NT_HEADERS* ntHeaders)</span> &#123;</span><br><span class="line">    <span class="type">void</span>* baseAddress = VirtualAlloc((LPVOID)ntHeaders-&gt;OptionalHeader.ImageBase,</span><br><span class="line">        ntHeaders-&gt;OptionalHeader.SizeOfImage,</span><br><span class="line">        MEM_COMMIT | MEM_RESERVE,</span><br><span class="line">        PAGE_EXECUTE_READWRITE);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!baseAddress) &#123;</span><br><span class="line">        baseAddress = VirtualAlloc(<span class="literal">NULL</span>,</span><br><span class="line">            ntHeaders-&gt;OptionalHeader.SizeOfImage,</span><br><span class="line">            MEM_COMMIT | MEM_RESERVE,</span><br><span class="line">            PAGE_EXECUTE_READWRITE);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!baseAddress) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Failed to allocate memory for image.\n&quot;</span>);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Memory allocated at: 0x%p\n&quot;</span>, baseAddress);</span><br><span class="line">    <span class="keyword">return</span> baseAddress;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
 
-<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="code"><pre><span class="line">The final element.</span><br></pre></td></tr></table></figure></div>
-]]></content>
-  </entry>
-  <entry>
-    <title>Yet Another Sample Page</title>
-    <url>/2024/08/26/Another-Samsdsdple-Page/</url>
-    <content><![CDATA[<p>Text can be <strong>bold</strong>, <em>italic</em>, <del>strikethrough</del> or <code>keyword</code>.</p>
-<p><a href="another-page">Link to another page</a>.</p>
-<p>There should be whitespace between paragraphs.</p>
-<p>There should be whitespace between paragraphs. We recommend including a README, or a file with information about your project.</p>
-<h1 id="Header-1"><a href="#Header-1" class="headerlink" title="Header 1"></a><a href="#header-1"></a>Header 1</h1><p>This is a normal paragraph following a header. GitHub is a code hosting platform for version control and collaboration. It lets you and others work together on projects from anywhere.</p>
-<h2 id="Header-2"><a href="#Header-2" class="headerlink" title="Header 2"></a><a href="#header-2"></a>Header 2</h2><blockquote>
-<p>This is a blockquote following a header.</p>
-<p>When something is important enough, you do it even if the odds are not in your favor.</p>
-</blockquote>
-<h3 id="Header-3"><a href="#Header-3" class="headerlink" title="Header 3"></a><a href="#header-3"></a>Header 3</h3><div class="highlight-container" data-rel="Js"><figure class="iseeu highlight js"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Javascript code with syntax highlighting.</span></span><br><span class="line"><span class="keyword">var</span> fun = <span class="keyword">function</span> <span class="title function_">lang</span>(<span class="params">l</span>) &#123;</span><br><span class="line">  dateformat.<span class="property">i18n</span> = <span class="built_in">require</span>(<span class="string">&#x27;./lang/&#x27;</span> + l)</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+<h4 id="4-MapSections-Function"><a href="#4-MapSections-Function" class="headerlink" title="4. MapSections Function"></a>4. <code>MapSections</code> Function</h4><p>This function maps the sections of the PE file into the allocated memory. It first copies the headers to the allocated memory and then maps the sections from the PE file to the appropriate addresses.</p>
+<div class="highlight-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">MapSections</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* peBuffer, IMAGE_NT_HEADERS* ntHeaders, <span class="type">void</span>* baseAddress)</span> &#123;</span><br><span class="line">    <span class="built_in">memcpy</span>(baseAddress, peBuffer, ntHeaders-&gt;OptionalHeader.SizeOfHeaders);</span><br><span class="line"></span><br><span class="line">    IMAGE_SECTION_HEADER* sectionHeader = IMAGE_FIRST_SECTION(ntHeaders);</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; ntHeaders-&gt;FileHeader.NumberOfSections; i++, sectionHeader++) &#123;</span><br><span class="line">        <span class="type">void</span>* dest = (<span class="type">char</span>*)baseAddress + sectionHeader-&gt;VirtualAddress;</span><br><span class="line">        <span class="type">void</span>* src = (<span class="type">char</span>*)peBuffer + sectionHeader-&gt;PointerToRawData;</span><br><span class="line">        <span class="built_in">memcpy</span>(dest, src, sectionHeader-&gt;SizeOfRawData);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Mapped section: %s to 0x%p\n&quot;</span>, sectionHeader-&gt;Name, dest);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
 
-<div class="highlight-container" data-rel="Ruby"><figure class="iseeu highlight ruby"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Ruby code with syntax highlighting</span></span><br><span class="line"><span class="title class_">GitHubPages</span><span class="symbol">:</span><span class="symbol">:Dependencies</span>.gems.each <span class="keyword">do</span> |<span class="params">gem, version</span>|</span><br><span class="line">  s.add_dependency(gem, <span class="string">&quot;= <span class="subst">#&#123;version&#125;</span>&quot;</span>)</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure></div>
+<h4 id="5-ResolveImports-Function"><a href="#5-ResolveImports-Function" class="headerlink" title="5. ResolveImports Function"></a>5. <code>ResolveImports</code> Function</h4><p>This function resolves the imports of the PE file. It extracts the names of the required DLLs and loads the necessary functions from those DLLs.</p>
+<div class="highlight-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">ResolveImports</span><span class="params">(IMAGE_NT_HEADERS* ntHeaders, <span class="type">void</span>* baseAddress)</span> &#123;</span><br><span class="line">    IMAGE_IMPORT_DESCRIPTOR* importDesc = (IMAGE_IMPORT_DESCRIPTOR*)((<span class="type">char</span>*)baseAddress +</span><br><span class="line">        ntHeaders-&gt;OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (importDesc-&gt;Name) &#123;</span><br><span class="line">        <span class="type">char</span>* dllName = (<span class="type">char</span>*)baseAddress + importDesc-&gt;Name;</span><br><span class="line">        HMODULE hModule = LoadLibraryA(dllName);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!hModule) &#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Failed to load library: %s\n&quot;</span>, dllName);</span><br><span class="line">            <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        IMAGE_THUNK_DATA* origFirstThunk = (IMAGE_THUNK_DATA*)((<span class="type">char</span>*)baseAddress + importDesc-&gt;OriginalFirstThunk);</span><br><span class="line">        IMAGE_THUNK_DATA* firstThunk = (IMAGE_THUNK_DATA*)((<span class="type">char</span>*)baseAddress + importDesc-&gt;FirstThunk);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span> (origFirstThunk-&gt;u1.AddressOfData) &#123;</span><br><span class="line">            IMAGE_IMPORT_BY_NAME* importByName = (IMAGE_IMPORT_BY_NAME*)((<span class="type">char</span>*)baseAddress + origFirstThunk-&gt;u1.AddressOfData);</span><br><span class="line">            FARPROC functionAddress = GetProcAddress(hModule, (LPCSTR)importByName-&gt;Name);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (!functionAddress) &#123;</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;Failed to resolve import: %s\n&quot;</span>, importByName-&gt;Name);</span><br><span class="line">                <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            firstThunk-&gt;u1.Function = (DWORD_PTR)functionAddress;</span><br><span class="line">            origFirstThunk++;</span><br><span class="line">            firstThunk++;</span><br><span class="line">        &#125;</span><br><span class="line">        importDesc++;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Imports resolved.\n&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
 
-<h4 id="Header-4"><a href="#Header-4" class="headerlink" title="Header 4"></a><a href="#header-4"></a>Header 4</h4><ul>
-<li>This is an unordered list following a header.</li>
-<li>This is an unordered list following a header.</li>
-<li>This is an unordered list following a header.</li>
-</ul>
-<h5 id="Header-5"><a href="#Header-5" class="headerlink" title="Header 5"></a><a href="#header-5"></a>Header 5</h5><ol>
-<li>This is an ordered list following a header.</li>
-<li>This is an ordered list following a header.</li>
-<li>This is an ordered list following a header.</li>
-</ol>
-<h6 id="Header-6"><a href="#Header-6" class="headerlink" title="Header 6"></a><a href="#header-6"></a>Header 6</h6><table>
-<thead>
-<tr>
-<th align="left">head1</th>
-<th align="left">head two</th>
-<th align="left">three</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">ok</td>
-<td align="left">good swedish fish</td>
-<td align="left">nice</td>
-</tr>
-<tr>
-<td align="left">out of stock</td>
-<td align="left">good and plenty</td>
-<td align="left">nice</td>
-</tr>
-<tr>
-<td align="left">ok</td>
-<td align="left">good <code>oreos</code></td>
-<td align="left">hmm</td>
-</tr>
-<tr>
-<td align="left">ok</td>
-<td align="left">good <code>zoute</code> drop</td>
-<td align="left">yumm</td>
-</tr>
-</tbody></table>
-<h3 id="There’s-a-horizontal-rule-below-this"><a href="#There’s-a-horizontal-rule-below-this" class="headerlink" title="There’s a horizontal rule below this."></a>There’s a horizontal rule below this.</h3><hr>
-<h3 id="Here-is-an-unordered-list"><a href="#Here-is-an-unordered-list" class="headerlink" title="Here is an unordered list:"></a>Here is an unordered list:</h3><ul>
-<li>Item foo</li>
-<li>Item bar</li>
-<li>Item baz</li>
-<li>Item zip</li>
-</ul>
-<h3 id="And-an-ordered-list"><a href="#And-an-ordered-list" class="headerlink" title="And an ordered list:"></a>And an ordered list:</h3><ol>
-<li>Item one</li>
-<li>Item two</li>
-<li>Item three</li>
-<li>Item four</li>
-</ol>
-<h3 id="And-a-nested-list"><a href="#And-a-nested-list" class="headerlink" title="And a nested list:"></a>And a nested list:</h3><ul>
-<li>level 1 item<ul>
-<li>level 2 item</li>
-<li>level 2 item<ul>
-<li>level 3 item</li>
-<li>level 3 item</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>level 1 item<ul>
-<li>level 2 item</li>
-<li>level 2 item</li>
-<li>level 2 item</li>
-</ul>
-</li>
-<li>level 1 item<ul>
-<li>level 2 item</li>
-<li>level 2 item</li>
-</ul>
-</li>
-<li>level 1 item</li>
-</ul>
-<h3 id="Small-image"><a href="#Small-image" class="headerlink" title="Small image"></a>Small image</h3><p><img  
-                     lazyload
-                     src="/images/loading.svg"
-                     data-src="https://assets-cdn.github.com/images/icons/emoji/octocat.png"
-                     
-                ></p>
-<h3 id="Large-image"><a href="#Large-image" class="headerlink" title="Large image"></a>Large image</h3><p><img  
-                     lazyload
-                     src="/images/loading.svg"
-                     data-src="https://guides.github.com/activities/hello-world/branching.png"
-                     
-                ></p>
-<h3 id="Definition-lists-can-be-used-with-HTML-syntax"><a href="#Definition-lists-can-be-used-with-HTML-syntax" class="headerlink" title="Definition lists can be used with HTML syntax."></a>Definition lists can be used with HTML syntax.</h3><dl>
-<dt>Name</dt>
-<dd>Godzilla</dd>
-<dt>Born</dt>
-<dd>1952</dd>
-<dt>Birthplace</dt>
-<dd>Japan</dd>
-<dt>Color</dt>
-<dd>Green</dd>
-</dl>
+<h4 id="6-ApplyRelocations-Function"><a href="#6-ApplyRelocations-Function" class="headerlink" title="6. ApplyRelocations Function"></a>6. <code>ApplyRelocations</code> Function</h4><p>If the PE file is loaded at an address different from its preferred address, this function applies the necessary relocations to ensure that absolute addresses in the PE file work correctly.</p>
+<div class="highlight-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">ApplyRelocations</span><span class="params">(IMAGE_NT_HEADERS* ntHeaders, <span class="type">void</span>* baseAddress, DWORD_PTR delta)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (delta == <span class="number">0</span>) <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    IMAGE_BASE_RELOCATION* reloc = (IMAGE_BASE_RELOCATION*)((<span class="type">char</span>*)baseAddress +</span><br><span class="line">        ntHeaders-&gt;OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (reloc-&gt;VirtualAddress) &#123;</span><br><span class="line">        WORD* relocItem = (WORD*)((<span class="type">char</span>*)reloc + <span class="keyword">sizeof</span>(IMAGE_BASE_RELOCATION));</span><br><span class="line">        <span class="type">int</span> numRelocs = (reloc-&gt;SizeOfBlock - <span class="keyword">sizeof</span>(IMAGE_BASE_RELOCATION)) / <span class="keyword">sizeof</span>(WORD);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; numRelocs; i++) &#123;</span><br><span class="line">            <span class="keyword">if</span> ((relocItem[i] &gt;&gt; <span class="number">12</span>) == IMAGE_REL_BASED_HIGHLOW) &#123;</span><br><span class="line">                DWORD* patchAddr = (DWORD*)((<span class="type">char</span>*)baseAddress + reloc-&gt;VirtualAddress + (relocItem[i] &amp; <span class="number">0xFFF</span>));</span><br><span class="line">                *patchAddr += (DWORD)delta;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        reloc = (IMAGE_BASE_RELOCATION*)((<span class="type">char</span>*)reloc + reloc-&gt;SizeOfBlock);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Relocations applied.\n&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
 
-<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="code"><pre><span class="line">Long, single-line code blocks should not wrap. They should horizontally scroll if they are too long. This line should be long enough to demonstrate this.</span><br></pre></td></tr></table></figure></div>
+<h4 id="7-ExecutePE-Function"><a href="#7-ExecutePE-Function" class="headerlink" title="7. ExecutePE Function"></a>7. <code>ExecutePE</code> Function</h4><p>This function locates the entry point of the PE file and executes it.</p>
+<div class="highlight-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">ExecutePE</span><span class="params">(IMAGE_NT_HEADERS* ntHeaders, <span class="type">void</span>* baseAddress)</span> &#123;</span><br><span class="line">    <span class="type">void</span> (*entryPoint)() = (<span class="type">void</span> (*)())((<span class="type">char</span>*)baseAddress + ntHeaders-&gt;OptionalHeader.AddressOfEntryPoint);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Executing PE at entry point: 0x%p\n&quot;</span>, entryPoint</span><br><span class="line"></span><br><span class="line">);</span><br><span class="line">    entryPoint();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
 
-<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="code"><pre><span class="line">The final element.</span><br></pre></td></tr></table></figure></div>
-]]></content>
-  </entry>
-  <entry>
-    <title>My First Blog</title>
-    <url>/2024/08/27/First-Blog/</url>
-    <content><![CDATA[<h1 id="How-i-wrote-my-first-blog"><a href="#How-i-wrote-my-first-blog" class="headerlink" title="How i wrote my first blog"></a>How i wrote my first blog</h1><p>i’ll add more stuff here. this is how i wrote my first website.</p>
-<p>test 12344</p>
+<h4 id="Full-Simple-PE-Loader-x64"><a href="#Full-Simple-PE-Loader-x64" class="headerlink" title="Full Simple PE Loader (x64)"></a>Full Simple PE Loader (x64)</h4><div class="highlight-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> _CRT_SECURE_NO_WARNINGS</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;windows.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Function prototypes</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">LoadPEFile</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* filePath)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">ParseHeaders</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* peBuffer, IMAGE_NT_HEADERS** ntHeaders)</span>;</span><br><span class="line"><span class="type">void</span>* <span class="title function_">AllocateMemoryForImage</span><span class="params">(IMAGE_NT_HEADERS* ntHeaders)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">MapSections</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* peBuffer, IMAGE_NT_HEADERS* ntHeaders, <span class="type">void</span>* baseAddress)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">ResolveImports</span><span class="params">(IMAGE_NT_HEADERS* ntHeaders, <span class="type">void</span>* baseAddress)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">ApplyRelocations</span><span class="params">(IMAGE_NT_HEADERS* ntHeaders, <span class="type">void</span>* baseAddress, DWORD_PTR delta)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">ExecutePE</span><span class="params">(IMAGE_NT_HEADERS* ntHeaders, <span class="type">void</span>* baseAddress)</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span>* argv[])</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (argc != <span class="number">2</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Usage: %s &lt;PE file path&gt;\n&quot;</span>, argv[<span class="number">0</span>]);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    LoadPEFile(argv[<span class="number">1</span>]);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">LoadPEFile</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* filePath)</span> &#123;</span><br><span class="line">    FILE* peFile = fopen(filePath, <span class="string">&quot;rb&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (!peFile) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Failed to open PE file: %s\n&quot;</span>, filePath);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Get the size of the file</span></span><br><span class="line">    fseek(peFile, <span class="number">0</span>, SEEK_END);</span><br><span class="line">    <span class="type">long</span> fileSize = ftell(peFile);</span><br><span class="line">    fseek(peFile, <span class="number">0</span>, SEEK_SET);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Allocate memory and read the file into the buffer</span></span><br><span class="line">    <span class="type">char</span>* peBuffer = (<span class="type">char</span>*)<span class="built_in">malloc</span>(fileSize);</span><br><span class="line">    fread(peBuffer, <span class="number">1</span>, fileSize, peFile);</span><br><span class="line">    fclose(peFile);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Parse headers and load sections</span></span><br><span class="line">    IMAGE_NT_HEADERS* ntHeaders;</span><br><span class="line">    ParseHeaders(peBuffer, &amp;ntHeaders);</span><br><span class="line">    <span class="type">void</span>* baseAddress = AllocateMemoryForImage(ntHeaders);</span><br><span class="line">    MapSections(peBuffer, ntHeaders, baseAddress);</span><br><span class="line">    ResolveImports(ntHeaders, baseAddress);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Handle relocations</span></span><br><span class="line">    DWORD_PTR delta = (DWORD_PTR)baseAddress - ntHeaders-&gt;OptionalHeader.ImageBase;</span><br><span class="line">    <span class="keyword">if</span> (delta != <span class="number">0</span>) &#123;</span><br><span class="line">        ApplyRelocations(ntHeaders, baseAddress, delta);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ExecutePE(ntHeaders, baseAddress);</span><br><span class="line">    <span class="built_in">free</span>(peBuffer);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">ParseHeaders</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* peBuffer, IMAGE_NT_HEADERS** ntHeaders)</span> &#123;</span><br><span class="line">    <span class="comment">// DOS Header</span></span><br><span class="line">    IMAGE_DOS_HEADER* dosHeader = (IMAGE_DOS_HEADER*)peBuffer;</span><br><span class="line">    <span class="keyword">if</span> (dosHeader-&gt;e_magic != IMAGE_DOS_SIGNATURE) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Invalid DOS signature.\n&quot;</span>);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// NT Headers</span></span><br><span class="line">    *ntHeaders = (IMAGE_NT_HEADERS*)(peBuffer + dosHeader-&gt;e_lfanew);</span><br><span class="line">    <span class="keyword">if</span> ((*ntHeaders)-&gt;Signature != IMAGE_NT_SIGNATURE) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Invalid PE signature.\n&quot;</span>);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Valid PE file.\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span>* <span class="title function_">AllocateMemoryForImage</span><span class="params">(IMAGE_NT_HEADERS* ntHeaders)</span> &#123;</span><br><span class="line">    <span class="comment">// Allocate memory for the image, aligned to the preferred base address</span></span><br><span class="line">    <span class="type">void</span>* baseAddress = VirtualAlloc((LPVOID)ntHeaders-&gt;OptionalHeader.ImageBase,</span><br><span class="line">        ntHeaders-&gt;OptionalHeader.SizeOfImage,</span><br><span class="line">        MEM_COMMIT | MEM_RESERVE,</span><br><span class="line">        PAGE_EXECUTE_READWRITE);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!baseAddress) &#123;</span><br><span class="line">        <span class="comment">// If allocation at preferred address fails, allocate memory at any available address</span></span><br><span class="line">        baseAddress = VirtualAlloc(<span class="literal">NULL</span>,</span><br><span class="line">            ntHeaders-&gt;OptionalHeader.SizeOfImage,</span><br><span class="line">            MEM_COMMIT | MEM_RESERVE,</span><br><span class="line">            PAGE_EXECUTE_READWRITE);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!baseAddress) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Failed to allocate memory for image.\n&quot;</span>);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Memory allocated at: 0x%p\n&quot;</span>, baseAddress);</span><br><span class="line">    <span class="keyword">return</span> baseAddress;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">MapSections</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* peBuffer, IMAGE_NT_HEADERS* ntHeaders, <span class="type">void</span>* baseAddress)</span> &#123;</span><br><span class="line">    <span class="comment">// Copy the headers to the allocated memory</span></span><br><span class="line">    <span class="built_in">memcpy</span>(baseAddress, peBuffer, ntHeaders-&gt;OptionalHeader.SizeOfHeaders);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Map sections to memory</span></span><br><span class="line">    IMAGE_SECTION_HEADER* sectionHeader = IMAGE_FIRST_SECTION(ntHeaders);</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; ntHeaders-&gt;FileHeader.NumberOfSections; i++, sectionHeader++) &#123;</span><br><span class="line">        <span class="type">void</span>* dest = (<span class="type">char</span>*)baseAddress + sectionHeader-&gt;VirtualAddress;</span><br><span class="line">        <span class="type">void</span>* src = (<span class="type">char</span>*)peBuffer + sectionHeader-&gt;PointerToRawData;</span><br><span class="line">        <span class="built_in">memcpy</span>(dest, src, sectionHeader-&gt;SizeOfRawData);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Mapped section: %s to 0x%p\n&quot;</span>, sectionHeader-&gt;Name, dest);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">ResolveImports</span><span class="params">(IMAGE_NT_HEADERS* ntHeaders, <span class="type">void</span>* baseAddress)</span> &#123;</span><br><span class="line">    IMAGE_IMPORT_DESCRIPTOR* importDesc = (IMAGE_IMPORT_DESCRIPTOR*)((<span class="type">char</span>*)baseAddress +</span><br><span class="line">        ntHeaders-&gt;OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (importDesc-&gt;Name) &#123;</span><br><span class="line">        <span class="type">char</span>* dllName = (<span class="type">char</span>*)baseAddress + importDesc-&gt;Name;</span><br><span class="line">        HMODULE hModule = LoadLibraryA(dllName);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!hModule) &#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Failed to load library: %s\n&quot;</span>, dllName);</span><br><span class="line">            <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        IMAGE_THUNK_DATA* origFirstThunk = (IMAGE_THUNK_DATA*)((<span class="type">char</span>*)baseAddress + importDesc-&gt;OriginalFirstThunk);</span><br><span class="line">        IMAGE_THUNK_DATA* firstThunk = (IMAGE_THUNK_DATA*)((<span class="type">char</span>*)baseAddress + importDesc-&gt;FirstThunk);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span> (origFirstThunk-&gt;u1.AddressOfData) &#123;</span><br><span class="line">            IMAGE_IMPORT_BY_NAME* importByName = (IMAGE_IMPORT_BY_NAME*)((<span class="type">char</span>*)baseAddress + origFirstThunk-&gt;u1.AddressOfData);</span><br><span class="line">            FARPROC functionAddress = GetProcAddress(hModule, (LPCSTR)importByName-&gt;Name);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (!functionAddress) &#123;</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;Failed to resolve import: %s\n&quot;</span>, importByName-&gt;Name);</span><br><span class="line">                <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            firstThunk-&gt;u1.Function = (DWORD_PTR)functionAddress;</span><br><span class="line">            origFirstThunk++;</span><br><span class="line">            firstThunk++;</span><br><span class="line">        &#125;</span><br><span class="line">        importDesc++;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Imports resolved.\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">ApplyRelocations</span><span class="params">(IMAGE_NT_HEADERS* ntHeaders, <span class="type">void</span>* baseAddress, DWORD_PTR delta)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (delta == <span class="number">0</span>) <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    IMAGE_BASE_RELOCATION* reloc = (IMAGE_BASE_RELOCATION*)((<span class="type">char</span>*)baseAddress +</span><br><span class="line">        ntHeaders-&gt;OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (reloc-&gt;VirtualAddress) &#123;</span><br><span class="line">        WORD* relocItem = (WORD*)((<span class="type">char</span>*)reloc + <span class="keyword">sizeof</span>(IMAGE_BASE_RELOCATION));</span><br><span class="line">        <span class="type">int</span> numRelocs = (reloc-&gt;SizeOfBlock - <span class="keyword">sizeof</span>(IMAGE_BASE_RELOCATION)) / <span class="keyword">sizeof</span>(WORD);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; numRelocs; i++) &#123;</span><br><span class="line">            <span class="keyword">if</span> ((relocItem[i] &gt;&gt; <span class="number">12</span>) == IMAGE_REL_BASED_HIGHLOW) &#123;</span><br><span class="line">                DWORD* patchAddr = (DWORD*)((<span class="type">char</span>*)baseAddress + reloc-&gt;VirtualAddress + (relocItem[i] &amp; <span class="number">0xFFF</span>));</span><br><span class="line">                *patchAddr += (DWORD)delta;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        reloc = (IMAGE_BASE_RELOCATION*)((<span class="type">char</span>*)reloc + reloc-&gt;SizeOfBlock);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Relocations applied.\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">ExecutePE</span><span class="params">(IMAGE_NT_HEADERS* ntHeaders, <span class="type">void</span>* baseAddress)</span> &#123;</span><br><span class="line">    <span class="comment">// Get the entry point address and call it</span></span><br><span class="line">    <span class="type">void</span> (*entryPoint)() = (<span class="type">void</span> (*)())((<span class="type">char</span>*)baseAddress + ntHeaders-&gt;OptionalHeader.AddressOfEntryPoint);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Executing PE at entry point: 0x%p\n&quot;</span>, entryPoint);</span><br><span class="line">    entryPoint();</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure></div>
+
+<h4 id="Important-Note"><a href="#Important-Note" class="headerlink" title="Important Note"></a>Important Note</h4><p><strong>There is no PE loader that can load all PEs, the most logical way is to write a custom loader for an EXE (in malware development), for example, the above code cannot load Notepad.exe, but it can load clac.exe, the reason for this The difference is the type of PE contents.</strong></p>
+<h4 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h4><p>This simple PE Loader demonstrates the basic steps required to load and execute a PE file in Windows. In real-world scenarios, more advanced PE Loaders might include additional features like manipulating internal PE structures, more complex header analysis, and various security mechanisms. These types of tools can be used for security testing, malware analysis, or custom software loading and execution.</p>
 ]]></content>
       <categories>
-        <category>personals</category>
-        <category>tests</category>
+        <category>Malware</category>
+        <category>Windows</category>
       </categories>
       <tags>
-        <tag>first</tag>
-        <tag>blog</tag>
+        <tag>C</tag>
+        <tag>malvware dev</tag>
         <tag>cybersec</tag>
+        <tag>WinAPI</tag>
       </tags>
   </entry>
 </search>
